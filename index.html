@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Restaurant Contents Inventory</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand-lockup">
+        <p class="eyebrow">Closing restaurant contents</p>
+        <h1>Restaurant Contents Inventory</h1>
+      </div>
+      <div class="source-lockup">
+        <span>125 photos</span>
+        <span>May 1, 2026</span>
+        <span>Buyer-removes basis</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="total-shell">
+        <p class="eyebrow">Selected total</p>
+        <h2 id="totalMid"></h2>
+        <p id="totalRange"></p>
+        <p class="quiet" id="totalSummary"></p>
+      </section>
+
+      <section class="band">
+        <div class="section-heading">
+          <p class="eyebrow">Buckets</p>
+          <h2>Click to include or exclude</h2>
+        </div>
+        <div id="bucketChips" class="bucket-chips"></div>
+        <div class="single-search">
+          <label>
+            <span>Search</span>
+            <input id="searchBox" type="search" placeholder="chairs, patio, refrigerator">
+          </label>
+        </div>
+      </section>
+
+      <section class="band">
+        <div id="itemList" class="item-grid"></div>
+      </section>
+    </main>
+
+    <dialog id="imageDialog">
+      <button class="close-dialog" type="button" aria-label="Close">x</button>
+      <img id="dialogImage" alt="">
+      <p id="dialogCaption"></p>
+    </dialog>
+
+    <script src="app.js" defer></script>
+  </body>
+</html>
