@@ -42,10 +42,10 @@ const inventory = [
     category: "Chairs & stools",
     recommendation: "Take",
     name: "Brown arched-back wood armchairs with tan seats",
-    qty: "2 visible / likely 3-4",
-    confidence: "Medium",
-    low: 80,
-    high: 300,
+    qty: "5",
+    confidence: "High",
+    low: 150,
+    high: 450,
     rationale:
       "Attractive individual pieces, but the count is low and several angles repeat the same chairs. Value is mostly use value.",
     photos: photos(["IMG_0141", "IMG_0150", "IMG_0259"])
