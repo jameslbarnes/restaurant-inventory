@@ -103,36 +103,60 @@ main {
 }
 
 .total-shell {
-  padding: 56px 26px 48px;
+  position: sticky;
+  top: 72px;
+  z-index: 25;
+  padding: 18px 26px;
   background: #172123;
   color: #f8f6ef;
-  text-align: center;
+  border-bottom: 1px solid rgba(245, 239, 228, 0.12);
+}
+
+.total-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+.total-figure {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  min-width: 0;
 }
 
 .total-shell .eyebrow {
   color: #93d3c5;
-  margin-bottom: 12px;
+  margin: 0;
+  white-space: nowrap;
 }
 
 .total-shell h2 {
   margin: 0;
-  font-size: 5rem;
+  font-size: 2.6rem;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
   line-height: 1;
 }
 
+.total-meta {
+  text-align: right;
+}
+
 .total-shell #totalRange {
-  margin: 14px 0 4px;
+  margin: 0;
   color: #cdd7d3;
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   font-variant-numeric: tabular-nums;
 }
 
 .total-shell .quiet {
-  margin: 0;
+  margin: 2px 0 0;
   color: #93a8a4;
-  font-size: 0.88rem;
+  font-size: 0.82rem;
 }
 
 .band {
@@ -569,11 +593,26 @@ dialog img {
   }
 
   .total-shell {
-    padding: 40px 18px 32px;
+    top: 0;
+    padding: 14px 18px;
+  }
+
+  .total-inner {
+    flex-direction: column;
+    align-items: start;
+    gap: 6px;
+  }
+
+  .total-figure {
+    flex-wrap: wrap;
+  }
+
+  .total-meta {
+    text-align: left;
   }
 
   .total-shell h2 {
-    font-size: 3.4rem;
+    font-size: 2rem;
   }
 
   .band {
@@ -605,7 +644,7 @@ dialog img {
 
 @media (max-width: 520px) {
   .total-shell h2 {
-    font-size: 2.6rem;
+    font-size: 1.7rem;
   }
 
   .evidence-row {
