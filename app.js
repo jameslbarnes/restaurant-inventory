@@ -68,10 +68,10 @@ const inventory = [
     category: "Lounge",
     recommendation: "Take",
     name: "Gray/black upholstered barrel chairs",
-    qty: "2 visible",
+    qty: "3",
     confidence: "High",
-    low: 150,
-    high: 350,
+    low: 225,
+    high: 525,
     rationale:
       "Clearly visible pair. Good lounge value, but used upholstery should stay discounted unless condition is excellent.",
     photos: photos(["IMG_0168", "IMG_0197", "IMG_0259"])
