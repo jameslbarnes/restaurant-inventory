@@ -446,53 +446,23 @@ function confidenceClass(value) {
   return value.toLowerCase().split(" ")[0];
 }
 
-function bucketKey(item) {
-  return `${item.group}:${item.category}`;
-}
+const allCategories = [...new Set(inventory.map((i) => i.category))].sort();
+const hiddenCategories = new Set();
+const selected = new Set();
+inventory.forEach((item, idx) => {
+  if (item.group === "priority") selected.add(idx);
+});
 
-function buildBuckets() {
-  const map = new Map();
-  for (const item of inventory) {
-    const key = bucketKey(item);
-    if (!map.has(key)) {
-      map.set(key, {
-        key,
-        category: item.category,
-        group: item.group,
-        items: [],
-        low: 0,
-        high: 0
-      });
-    }
-    const b = map.get(key);
-    b.items.push(item);
-    b.low += item.low;
-    b.high += item.high;
-  }
-  const buckets = [...map.values()];
-  buckets.sort((a, b) => {
-    if (a.group !== b.group) return a.group === "priority" ? -1 : 1;
-    return (b.low + b.high) - (a.low + a.high);
-  });
-  return buckets;
-}
-
-const buckets = buildBuckets();
-const activeKeys = new Set(buckets.filter((b) => b.group === "priority").map((b) => b.key));
-
-function renderBuckets() {
-  document.querySelector("#bucketChips").innerHTML = buckets
-    .map((b) => {
-      const checked = activeKeys.has(b.key);
-      const optional = b.group === "secondary" ? `<span class="bucket-tag">Optional</span>` : "";
+function renderCategoryChips() {
+  document.querySelector("#categoryChips").innerHTML = allCategories
+    .map((cat) => {
+      const active = !hiddenCategories.has(cat);
+      const count = inventory.filter((i) => i.category === cat).length;
       return `
-        <label class="bucket-chip${checked ? " active" : ""}" data-key="${b.key}">
-          <input type="checkbox" ${checked ? "checked" : ""}>
-          <span class="bucket-info">
-            <span class="bucket-name">${b.category}${optional}</span>
-            <span class="bucket-range">${money.format(b.low)}–${money.format(b.high)} · ${b.items.length} item${b.items.length === 1 ? "" : "s"}</span>
-          </span>
-        </label>
+        <button type="button" class="category-chip${active ? " active" : ""}" data-category="${cat}">
+          <span>${cat}</span>
+          <span class="category-count">${count}</span>
+        </button>
       `;
     })
     .join("");
@@ -501,25 +471,19 @@ function renderBuckets() {
 function updateTotal() {
   let low = 0;
   let high = 0;
-  let count = 0;
-  for (const b of buckets) {
-    if (activeKeys.has(b.key)) {
-      low += b.low;
-      high += b.high;
-      count += b.items.length;
-    }
+  for (const idx of selected) {
+    const item = inventory[idx];
+    low += item.low;
+    high += item.high;
   }
   const mid = Math.round((low + high) / 2);
   document.querySelector("#totalMid").textContent = money.format(mid);
   document.querySelector("#totalRange").textContent =
-    count === 0 ? "Nothing selected" : `${money.format(low)} – ${money.format(high)} range`;
-  document.querySelector("#totalSummary").textContent =
-    count === 0
-      ? "Toggle a bucket to start"
-      : `${count} item${count === 1 ? "" : "s"} in ${activeKeys.size} bucket${activeKeys.size === 1 ? "" : "s"}`;
+    selected.size === 0 ? "Nothing selected" : `${money.format(low)} – ${money.format(high)} range`;
+  document.querySelector("#totalSummary").textContent = `${selected.size} of ${inventory.length} items selected`;
 }
 
-function itemCard(item) {
+function itemCard(item, idx) {
   const primaryPhoto = item.photos[0];
   const evidence = item.photos
     .slice(0, 3)
@@ -534,21 +498,28 @@ function itemCard(item) {
   const upside = item.upside
     ? `<div class="upside-note"><strong>Tested upside</strong><span>${item.upside}</span></div>`
     : "";
+  const isSelected = selected.has(idx);
 
   return `
-    <article class="item-card ${item.upside ? "featured-item" : ""}" data-bucket="${bucketKey(item)}" data-text="${`${item.name} ${item.qty} ${item.category} ${item.recommendation} ${item.rationale}`.toLowerCase()}">
+    <article class="item-card ${item.upside ? "featured-item " : ""}${isSelected ? "selected" : ""}" data-idx="${idx}" data-category="${item.category}" data-text="${`${item.name} ${item.qty} ${item.category} ${item.recommendation} ${item.rationale}`.toLowerCase()}">
       <button type="button" class="item-media" data-image="${primaryPhoto.src}" data-caption="${primaryPhoto.name} - ${item.name}">
         <img src="${primaryPhoto.src}" alt="${item.name} evidence ${primaryPhoto.name}" loading="lazy">
       </button>
       <div class="item-header">
-        <div>
+        <div class="item-title">
           <h3>${item.name}</h3>
           <div class="tag-row">
             <span class="tag">${item.category}</span>
             <span class="tag ${recommendationClass(item.recommendation)}">${item.recommendation}</span>
           </div>
         </div>
-        <span class="confidence ${confidenceClass(item.confidence)}">${item.confidence}</span>
+        <div class="item-header-right">
+          <label class="item-select">
+            <input type="checkbox" ${isSelected ? "checked" : ""}>
+            <span class="item-select-text">${isSelected ? "Included" : "Include"}</span>
+          </label>
+          <span class="confidence ${confidenceClass(item.confidence)}">${item.confidence}</span>
+        </div>
       </div>
       <div class="price-row">
         <div><span>Qty</span><strong>${item.qty}</strong></div>
@@ -569,11 +540,25 @@ function renderItems() {
 function applyVisibility() {
   const search = document.querySelector("#searchBox").value.trim().toLowerCase();
   document.querySelectorAll("#itemList .item-card").forEach((card) => {
-    const inBucket = activeKeys.has(card.dataset.bucket);
+    const visible = !hiddenCategories.has(card.dataset.category);
     const matchesSearch = !search || card.dataset.text.includes(search);
-    card.classList.toggle("hidden", !matchesSearch);
-    card.classList.toggle("dimmed", !inBucket);
+    card.classList.toggle("hidden", !(visible && matchesSearch));
   });
+}
+
+function syncCardSelection(idx) {
+  const card = document.querySelector(`#itemList .item-card[data-idx="${idx}"]`);
+  if (!card) return;
+  const isSelected = selected.has(idx);
+  card.classList.toggle("selected", isSelected);
+  const checkbox = card.querySelector(".item-select input");
+  if (checkbox && checkbox.checked !== isSelected) checkbox.checked = isSelected;
+  const label = card.querySelector(".item-select-text");
+  if (label) label.textContent = isSelected ? "Included" : "Include";
+}
+
+function syncAllCardSelections() {
+  inventory.forEach((_, idx) => syncCardSelection(idx));
 }
 
 function wireDialog() {
@@ -596,24 +581,47 @@ function wireDialog() {
   });
 }
 
-renderBuckets();
+renderCategoryChips();
 renderItems();
 updateTotal();
 applyVisibility();
 wireDialog();
 
-document.querySelector("#bucketChips").addEventListener("change", (event) => {
-  const label = event.target.closest(".bucket-chip");
-  if (!label) return;
-  const key = label.dataset.key;
-  if (event.target.checked) {
-    activeKeys.add(key);
-  } else {
-    activeKeys.delete(key);
-  }
-  label.classList.toggle("active", event.target.checked);
-  updateTotal();
+document.querySelector("#categoryChips").addEventListener("click", (event) => {
+  const btn = event.target.closest(".category-chip");
+  if (!btn) return;
+  const cat = btn.dataset.category;
+  if (hiddenCategories.has(cat)) hiddenCategories.delete(cat);
+  else hiddenCategories.add(cat);
+  btn.classList.toggle("active", !hiddenCategories.has(cat));
   applyVisibility();
+});
+
+document.querySelector("#itemList").addEventListener("change", (event) => {
+  const input = event.target;
+  if (!input.matches(".item-select input")) return;
+  const card = input.closest(".item-card");
+  const idx = Number(card.dataset.idx);
+  if (input.checked) selected.add(idx);
+  else selected.delete(idx);
+  syncCardSelection(idx);
+  updateTotal();
+});
+
+document.querySelector("#selectVisible").addEventListener("click", () => {
+  document.querySelectorAll("#itemList .item-card:not(.hidden)").forEach((card) => {
+    selected.add(Number(card.dataset.idx));
+  });
+  syncAllCardSelections();
+  updateTotal();
+});
+
+document.querySelector("#deselectVisible").addEventListener("click", () => {
+  document.querySelectorAll("#itemList .item-card:not(.hidden)").forEach((card) => {
+    selected.delete(Number(card.dataset.idx));
+  });
+  syncAllCardSelections();
+  updateTotal();
 });
 
 document.querySelector("#searchBox").addEventListener("input", applyVisibility);

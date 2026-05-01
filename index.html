@@ -27,17 +27,22 @@
         <p class="quiet" id="totalSummary"></p>
       </section>
 
-      <section class="band">
-        <div class="section-heading">
-          <p class="eyebrow">Buckets</p>
-          <h2>Click to include or exclude</h2>
-        </div>
-        <div id="bucketChips" class="bucket-chips"></div>
-        <div class="single-search">
-          <label>
-            <span>Search</span>
-            <input id="searchBox" type="search" placeholder="chairs, patio, refrigerator">
-          </label>
+      <section class="band controls-band">
+        <div class="controls-inner">
+          <div class="filter-block">
+            <p class="eyebrow">Filter by category</p>
+            <div id="categoryChips" class="category-chips"></div>
+          </div>
+          <div class="actions-block">
+            <div class="bulk-actions">
+              <button type="button" id="selectVisible">Select visible</button>
+              <button type="button" id="deselectVisible">Deselect visible</button>
+            </div>
+            <label class="single-search">
+              <span>Search</span>
+              <input id="searchBox" type="search" placeholder="chairs, patio, refrigerator">
+            </label>
+          </div>
         </div>
       </section>
 
