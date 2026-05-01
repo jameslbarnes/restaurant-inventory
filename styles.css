@@ -207,6 +207,17 @@ main {
   color: #fffaf0;
 }
 
+.category-chip.partial {
+  border-color: var(--green);
+  background: var(--surface);
+  color: var(--green-dark);
+}
+
+.category-chip.partial .category-count {
+  background: #d1e9e1;
+  color: var(--green-dark);
+}
+
 .actions-block {
   display: grid;
   grid-template-columns: auto 1fr;

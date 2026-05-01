@@ -447,25 +447,45 @@ function confidenceClass(value) {
 }
 
 const allCategories = [...new Set(inventory.map((i) => i.category))].sort();
-const hiddenCategories = new Set();
 const selected = new Set();
 inventory.forEach((item, idx) => {
   if (item.group === "priority") selected.add(idx);
 });
 
+function categoryAllSelected(cat) {
+  return inventory.every((item, idx) => item.category !== cat || selected.has(idx));
+}
+
+function categoryAnySelected(cat) {
+  return inventory.some((item, idx) => item.category === cat && selected.has(idx));
+}
+
 function renderCategoryChips() {
   document.querySelector("#categoryChips").innerHTML = allCategories
     .map((cat) => {
-      const active = !hiddenCategories.has(cat);
       const count = inventory.filter((i) => i.category === cat).length;
+      const selectedCount = inventory.filter((i, idx) => i.category === cat && selected.has(idx)).length;
+      const state = selectedCount === count ? "active" : selectedCount === 0 ? "" : "partial";
       return `
-        <button type="button" class="category-chip${active ? " active" : ""}" data-category="${cat}">
+        <button type="button" class="category-chip${state ? " " + state : ""}" data-category="${cat}">
           <span>${cat}</span>
-          <span class="category-count">${count}</span>
+          <span class="category-count">${selectedCount}/${count}</span>
         </button>
       `;
     })
     .join("");
+}
+
+function syncCategoryChips() {
+  document.querySelectorAll(".category-chip").forEach((btn) => {
+    const cat = btn.dataset.category;
+    const count = inventory.filter((i) => i.category === cat).length;
+    const selectedCount = inventory.filter((i, idx) => i.category === cat && selected.has(idx)).length;
+    btn.classList.remove("active", "partial");
+    if (selectedCount === count) btn.classList.add("active");
+    else if (selectedCount > 0) btn.classList.add("partial");
+    btn.querySelector(".category-count").textContent = `${selectedCount}/${count}`;
+  });
 }
 
 function updateTotal() {
@@ -540,9 +560,8 @@ function renderItems() {
 function applyVisibility() {
   const search = document.querySelector("#searchBox").value.trim().toLowerCase();
   document.querySelectorAll("#itemList .item-card").forEach((card) => {
-    const visible = !hiddenCategories.has(card.dataset.category);
     const matchesSearch = !search || card.dataset.text.includes(search);
-    card.classList.toggle("hidden", !(visible && matchesSearch));
+    card.classList.toggle("hidden", !matchesSearch);
   });
 }
 
@@ -591,10 +610,15 @@ document.querySelector("#categoryChips").addEventListener("click", (event) => {
   const btn = event.target.closest(".category-chip");
   if (!btn) return;
   const cat = btn.dataset.category;
-  if (hiddenCategories.has(cat)) hiddenCategories.delete(cat);
-  else hiddenCategories.add(cat);
-  btn.classList.toggle("active", !hiddenCategories.has(cat));
-  applyVisibility();
+  const allOn = categoryAllSelected(cat);
+  inventory.forEach((item, idx) => {
+    if (item.category !== cat) return;
+    if (allOn) selected.delete(idx);
+    else selected.add(idx);
+  });
+  syncAllCardSelections();
+  syncCategoryChips();
+  updateTotal();
 });
 
 document.querySelector("#itemList").addEventListener("change", (event) => {
@@ -605,22 +629,21 @@ document.querySelector("#itemList").addEventListener("change", (event) => {
   if (input.checked) selected.add(idx);
   else selected.delete(idx);
   syncCardSelection(idx);
+  syncCategoryChips();
   updateTotal();
 });
 
-document.querySelector("#selectVisible").addEventListener("click", () => {
-  document.querySelectorAll("#itemList .item-card:not(.hidden)").forEach((card) => {
-    selected.add(Number(card.dataset.idx));
-  });
+document.querySelector("#selectAll").addEventListener("click", () => {
+  inventory.forEach((_, idx) => selected.add(idx));
   syncAllCardSelections();
+  syncCategoryChips();
   updateTotal();
 });
 
-document.querySelector("#deselectVisible").addEventListener("click", () => {
-  document.querySelectorAll("#itemList .item-card:not(.hidden)").forEach((card) => {
-    selected.delete(Number(card.dataset.idx));
-  });
+document.querySelector("#deselectAll").addEventListener("click", () => {
+  selected.clear();
   syncAllCardSelections();
+  syncCategoryChips();
   updateTotal();
 });
 
