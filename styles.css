@@ -146,6 +146,26 @@ main {
   text-align: right;
 }
 
+.export-btn {
+  flex-shrink: 0;
+  border: 1px solid #93d3c5;
+  border-radius: 6px;
+  background: #f5efe4;
+  color: #172123;
+  font-weight: 800;
+  padding: 10px 16px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.export-btn:hover,
+.export-btn:focus-visible {
+  background: #fffaf0;
+  border-color: #fffaf0;
+  outline: none;
+}
+
 .total-shell #totalRange {
   margin: 0;
   color: #cdd7d3;

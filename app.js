@@ -648,3 +648,116 @@ document.querySelector("#deselectAll").addEventListener("click", () => {
 });
 
 document.querySelector("#searchBox").addEventListener("input", applyVisibility);
+
+async function exportBid() {
+  const ctor = window.jspdf && window.jspdf.jsPDF;
+  if (!ctor) {
+    alert("PDF library is still loading — try again in a moment.");
+    return;
+  }
+
+  const items = [...selected].map((idx) => inventory[idx]);
+  if (items.length === 0) {
+    alert("Select at least one item before exporting.");
+    return;
+  }
+
+  const low = items.reduce((s, i) => s + i.low, 0);
+  const high = items.reduce((s, i) => s + i.high, 0);
+  const mid = Math.round((low + high) / 2);
+
+  const doc = new ctor({ unit: "pt", format: "letter" });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 48;
+  const contentWidth = pageW - margin * 2;
+  let y = 60;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(20);
+  doc.setTextColor(23, 33, 35);
+  doc.text("Restaurant Contents Bid", margin, y);
+  y += 22;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.setTextColor(110);
+  doc.text(new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }), margin, y);
+  y += 30;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(34);
+  doc.setTextColor(23, 33, 35);
+  doc.text(money.format(mid), margin, y);
+  y += 24;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  doc.setTextColor(80);
+  doc.text(`${money.format(low)} – ${money.format(high)} range`, margin, y);
+  y += 14;
+  doc.text(`${items.length} of ${inventory.length} items selected`, margin, y);
+  y += 28;
+
+  doc.setDrawColor(216, 208, 195);
+  doc.line(margin, y, pageW - margin, y);
+  y += 22;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.setTextColor(23, 33, 35);
+  doc.text("Selected items", margin, y);
+  y += 18;
+
+  for (const item of items) {
+    const rationaleLines = doc.splitTextToSize(item.rationale, contentWidth - 8);
+    const blockHeight = 14 + 12 + rationaleLines.length * 12 + 10;
+    if (y + blockHeight > pageH - margin) {
+      doc.addPage();
+      y = 60;
+    }
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(23, 33, 35);
+    doc.text(item.name, margin, y);
+    y += 13;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(90);
+    doc.text(`${item.qty}  •  ${item.category}  •  ${money.format(item.low)} – ${money.format(item.high)}`, margin, y);
+    y += 12;
+
+    doc.setTextColor(120);
+    doc.text(rationaleLines, margin, y);
+    y += rationaleLines.length * 12 + 10;
+  }
+
+  const blob = doc.output("blob");
+  const file = new File([blob], "restaurant-bid.pdf", { type: "application/pdf" });
+
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({
+        files: [file],
+        title: "Restaurant Contents Bid",
+        text: `${money.format(mid)} for ${items.length} items`
+      });
+      return;
+    } catch (err) {
+      if (err.name === "AbortError") return;
+    }
+  }
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "restaurant-bid.pdf";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+document.querySelector("#exportBtn").addEventListener("click", exportBid);
