@@ -664,7 +664,6 @@ function buildBidPDF() {
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const margin = 48;
-  const contentWidth = pageW - margin * 2;
   let y = 60;
 
   doc.setFont("helvetica", "bold");
@@ -688,24 +687,15 @@ function buildBidPDF() {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
   doc.setTextColor(80);
-  doc.text(`${money.format(low)} – ${money.format(high)} range`, margin, y);
-  y += 14;
-  doc.text(`${items.length} of ${inventory.length} items selected`, margin, y);
-  y += 28;
+  doc.text("for the following items, removed by an agreed date:", margin, y);
+  y += 24;
 
   doc.setDrawColor(216, 208, 195);
   doc.line(margin, y, pageW - margin, y);
-  y += 22;
-
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
-  doc.setTextColor(23, 33, 35);
-  doc.text("Selected items", margin, y);
   y += 18;
 
   for (const item of items) {
-    const rationaleLines = doc.splitTextToSize(item.rationale, contentWidth - 8);
-    const blockHeight = 14 + 12 + rationaleLines.length * 12 + 10;
+    const blockHeight = 14 + 12 + 6;
     if (y + blockHeight > pageH - margin) {
       doc.addPage();
       y = 60;
@@ -719,13 +709,9 @@ function buildBidPDF() {
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
-    doc.setTextColor(90);
-    doc.text(`${item.qty}  •  ${item.category}  •  ${money.format(item.low)} – ${money.format(item.high)}`, margin, y);
-    y += 12;
-
-    doc.setTextColor(120);
-    doc.text(rationaleLines, margin, y);
-    y += rationaleLines.length * 12 + 10;
+    doc.setTextColor(110);
+    doc.text(`${item.qty}  •  ${item.category}`, margin, y);
+    y += 18;
   }
 
   return { doc, items, low, high, mid };
