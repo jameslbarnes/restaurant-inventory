@@ -146,8 +146,13 @@ main {
   text-align: right;
 }
 
-.export-btn {
+.export-actions {
+  display: flex;
+  gap: 8px;
   flex-shrink: 0;
+}
+
+.export-btn {
   border: 1px solid #93d3c5;
   border-radius: 6px;
   background: #f5efe4;
@@ -164,6 +169,17 @@ main {
   background: #fffaf0;
   border-color: #fffaf0;
   outline: none;
+}
+
+#shareBtn {
+  background: transparent;
+  color: #f8f6ef;
+}
+
+#shareBtn:hover,
+#shareBtn:focus-visible {
+  background: rgba(245, 239, 228, 0.12);
+  color: #f8f6ef;
 }
 
 .total-shell #totalRange {

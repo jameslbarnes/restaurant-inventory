@@ -649,18 +649,12 @@ document.querySelector("#deselectAll").addEventListener("click", () => {
 
 document.querySelector("#searchBox").addEventListener("input", applyVisibility);
 
-async function exportBid() {
+function buildBidPDF() {
   const ctor = window.jspdf && window.jspdf.jsPDF;
-  if (!ctor) {
-    alert("PDF library is still loading — try again in a moment.");
-    return;
-  }
+  if (!ctor) return null;
 
   const items = [...selected].map((idx) => inventory[idx]);
-  if (items.length === 0) {
-    alert("Select at least one item before exporting.");
-    return;
-  }
+  if (items.length === 0) return null;
 
   const low = items.reduce((s, i) => s + i.low, 0);
   const high = items.reduce((s, i) => s + i.high, 0);
@@ -734,7 +728,33 @@ async function exportBid() {
     y += rationaleLines.length * 12 + 10;
   }
 
-  const blob = doc.output("blob");
+  return { doc, items, low, high, mid };
+}
+
+function ensureBidReady() {
+  if (!(window.jspdf && window.jspdf.jsPDF)) {
+    alert("PDF library is still loading — try again in a moment.");
+    return false;
+  }
+  if (selected.size === 0) {
+    alert("Select at least one item before exporting.");
+    return false;
+  }
+  return true;
+}
+
+function saveBid() {
+  if (!ensureBidReady()) return;
+  const result = buildBidPDF();
+  if (!result) return;
+  result.doc.save("restaurant-bid.pdf");
+}
+
+async function shareBid() {
+  if (!ensureBidReady()) return;
+  const result = buildBidPDF();
+  if (!result) return;
+  const blob = result.doc.output("blob");
   const file = new File([blob], "restaurant-bid.pdf", { type: "application/pdf" });
 
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -742,7 +762,7 @@ async function exportBid() {
       await navigator.share({
         files: [file],
         title: "Restaurant Contents Bid",
-        text: `${money.format(mid)} for ${items.length} items`
+        text: `${money.format(result.mid)} for ${result.items.length} items`
       });
       return;
     } catch (err) {
@@ -750,14 +770,8 @@ async function exportBid() {
     }
   }
 
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "restaurant-bid.pdf";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  alert("Sharing isn't supported on this device. Use Save instead.");
 }
 
-document.querySelector("#exportBtn").addEventListener("click", exportBid);
+document.querySelector("#saveBtn").addEventListener("click", saveBid);
+document.querySelector("#shareBtn").addEventListener("click", shareBid);
